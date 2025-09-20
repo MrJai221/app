@@ -1,35 +1,38 @@
-// server.js
 const express = require('express');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+
+// Enable CORS for all origins (or restrict to your Netlify URL)
+app.use(cors({
+  origin: 'https://helpful-nasturtium-73fb49.netlify.app', // or '*' for all
+  methods: ['GET','POST']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend static files
+// Serve frontend static files if needed
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Handle form submission
 app.post('/submit', (req, res) => {
     const { email, option } = req.body;
 
-    // Nodemailer transporter
     const transporter = nodemailer.createTransport({
         service: "Gmail",
         auth: {
             user: process.env.ADMIN_EMAIL,
             pass: process.env.EMAIL_PASSWORD
-        },
-        tls: {
-            rejectUnauthorized: false // ignore self-signed certs (dev only)
         }
     });
 
     const mailOptions = {
         from: process.env.ADMIN_EMAIL,
-        to: process.env.ADMIN_EMAIL, // Admin receives the email
+        to: process.env.ADMIN_EMAIL,
         subject: "New Reward Submission",
         text: `Option: ${option}\nEmail: ${email}`
     };
@@ -44,7 +47,7 @@ app.post('/submit', (req, res) => {
     });
 });
 
-// Catch-all route to serve frontend
+// Default route for frontend
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
