@@ -1,28 +1,30 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
-const path = require('path');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 
-// ✅ Allow Netlify frontend
+// Frontend URL
+const FRONTEND_URL = 'https://helpful-nasturtium-73fb49.netlify.app';
+
+// ✅ CORS for your frontend only
 app.use(cors({
-  origin: 'https://helpful-nasturtium-73fb49.netlify.app', 
-  methods: ['GET', 'POST', 'OPTIONS'],
+  origin: FRONTEND_URL,
+  methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
 
-// ✅ Parse JSON
+// Parse JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Root route for health check
+// Health check
 app.get('/', (req, res) => {
   res.send('✅ Backend is running');
 });
 
-// ✅ Handle form submission
+// Handle form submission
 app.post('/submit', async (req, res) => {
   const { email, option } = req.body;
 
@@ -34,7 +36,9 @@ app.post('/submit', async (req, res) => {
 
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.ADMIN_EMAIL,
         pass: process.env.EMAIL_PASSWORD
@@ -43,7 +47,7 @@ app.post('/submit', async (req, res) => {
 
     const mailOptions = {
       from: process.env.ADMIN_EMAIL,
-      to: process.env.ADMIN_EMAIL, // send to yourself
+      to: process.env.ADMIN_EMAIL,
       subject: "🎁 New Reward Submission",
       text: `Option: ${option}\nEmail: ${email}`
     };
@@ -53,16 +57,16 @@ app.post('/submit', async (req, res) => {
 
     res.send('✅ Your email was successfully sent to the admin!');
   } catch (error) {
-    console.error("❌ Error sending email:", error.message);
+    console.error("❌ Error sending email:", error);
     res.status(500).send('❌ Error sending email: ' + error.message);
   }
 });
 
-// ✅ Serve frontend (if needed)
+// Redirect all other requests to frontend
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+  res.redirect(FRONTEND_URL);
 });
 
-// ✅ Start server
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
