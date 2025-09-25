@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ Frontend URL (change if your Netlify domain changes)
+// ✅ Frontend URL
 const FRONTEND_URL = 'https://helpful-nasturtium-73fb49.netlify.app';
 
 // ✅ Validate environment variables
@@ -14,7 +14,7 @@ if (!process.env.ADMIN_EMAIL || !process.env.EMAIL_PASSWORD) {
   process.exit(1);
 }
 
-// ✅ CORS setup (frontend only)
+// ✅ CORS setup
 app.use(cors({
   origin: FRONTEND_URL,
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -22,11 +22,14 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
+// ✅ Handle preflight requests explicitly
+app.options('*', cors());
+
 // ✅ Parse JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Health check route
+// ✅ Health check
 app.get('/', (req, res) => {
   res.send('✅ Backend is running fine');
 });
@@ -42,7 +45,6 @@ app.post('/submit', async (req, res) => {
   console.log("📩 Received form submission:", req.body);
 
   try {
-    // ✅ Nodemailer transporter (Gmail with App Password)
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -68,7 +70,7 @@ app.post('/submit', async (req, res) => {
   }
 });
 
-// ✅ Redirect all unknown routes to frontend
+// ✅ Redirect unknown GET requests to frontend (not OPTIONS/POST)
 app.get('*', (req, res) => {
   res.redirect(FRONTEND_URL);
 });
